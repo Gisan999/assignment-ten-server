@@ -35,6 +35,27 @@ async function run() {
 
         const productCollection = client.db('productsDB').collection('products');
         const brandCollection = client.db('brandDB').collection('brand');
+        const cartCollection = client.db('cartDB').collection('cart');
+
+        app.post('/cart', async(req, res)=> {
+            const newCart = req.body;
+            const result = await cartCollection.insertOne(newCart);
+            res.send(result);
+
+        })
+
+        app.get('/cart', async (req, res)=> {
+            const cursor = cartCollection.find();
+            const result = await cursor.toArray();
+            res.send(result)
+        })
+
+      app.delete('/cart/:id', async (req, res)=> {
+        const id = req.params.id;
+        const query = {_id: new ObjectId(id)}
+        const result = await cartCollection.deleteOne(query);
+        res.send(result);
+      })
 
         app.post('/brand', async (req, res)=> {
             const newBrand = req.body;
@@ -48,7 +69,7 @@ async function run() {
             const result = await cursor.toArray();
             res.send(result)
         })
-        
+
 
         app.get('/brand/:id', async (req, res)=> {
             const id = req.params.id;
