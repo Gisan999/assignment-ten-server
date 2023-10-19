@@ -1,4 +1,4 @@
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 const express = require("express")
 const cors = require("cors")
@@ -29,27 +29,76 @@ const client = new MongoClient(uri, {
 
 async function run() {
     try {
-       
+
         await client.connect();
-        
+
 
         const productCollection = client.db('productsDB').collection('products');
+        const brandCollection = client.db('brandDB').collection('brand');
+
+        app.post('/brand', async (req, res)=> {
+            const newBrand = req.body;
+            const result = await brandCollection.insertOne(newBrand);
+            res.send(result);
+        })
 
 
-        app.post('/product', async(req, res) => {
+        app.get('/brand', async (req, res)=> {
+            const cursor = brandCollection.find();
+            const result = await cursor.toArray();
+            res.send(result)
+        })
+        
+
+        app.get('/brand/:id', async (req, res)=> {
+            const id = req.params.id;
+            const query = {_id: new ObjectId(id)}
+            const result = await brandCollection.findOne(query);
+            res.send(result);
+        })
+
+
+        app.post('/product', async (req, res) => {
             const newProduct = req.body;
-            console.log(newProduct);
             const result = await productCollection.insertOne(newProduct);
             res.send(result);
         })
 
-        app.get('/product', async(req, res)=> {
+        app.get('/product', async (req, res) => {
             const cursor = productCollection.find();
             const result = await cursor.toArray();
             res.send(result);
         })
 
-      
+        app.get('/product/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await productCollection.findOne(query);
+            res.send(result);
+        })
+
+        app.put('/product/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) }
+            const options = { upsert: true };
+            const updateProduct = req.body;
+            const products = {
+                $set: {
+                    image: updateProduct.image,
+                    name: updateProduct.name, 
+                    brandName: updateProduct.brandName,
+                     type: updateProduct.type,
+                    price: updateProduct.price,
+                     shortDescription: updateProduct.shortDescription,
+                    rating: updateProduct.rating
+                }
+            }
+            const result = await productCollection.updateOne(filter, products, options);
+            res.send(result)
+
+        })
+
+
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
